@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.tsx';
+import { LanguageProvider } from './context/LanguageContext.tsx';
 import { Header } from './components/Header.tsx';
 import { Footer } from './components/Footer.tsx';
 import { LegalModal } from './components/LegalModal.tsx';
+import { PWAInstallPrompt } from './components/PWAInstallPrompt.tsx';
+import { OfflineIndicator } from './components/OfflineIndicator.tsx';
 import { HomePage } from './pages/HomePage.tsx';
 import { CategoryPage } from './pages/CategoryPage.tsx';
 import { AppDetailPage } from './pages/AppDetailPage.tsx';
@@ -37,6 +40,12 @@ function AppLayout() {
         type={legalModal}
         onClose={() => setLegalModal(null)}
       />
+
+      {/* PWA In-App Install Prompt Banner & iOS Guided Flow */}
+      <PWAInstallPrompt />
+
+      {/* Offline Connectivity Notification */}
+      <OfflineIndicator />
     </div>
   );
 }
@@ -44,9 +53,11 @@ function AppLayout() {
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <AppLayout />
-      </BrowserRouter>
+      <LanguageProvider>
+        <BrowserRouter>
+          <AppLayout />
+        </BrowserRouter>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

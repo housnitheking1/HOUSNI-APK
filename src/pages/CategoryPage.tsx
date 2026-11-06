@@ -15,6 +15,7 @@ import {
 import { FDroidApp } from '../types.ts';
 import { AppCard } from '../components/AppCard.tsx';
 import { searchApps } from '../services/fdroidService.ts';
+import { useLanguage } from '../context/LanguageContext.tsx';
 
 interface CategoryConfig {
   id: string;
@@ -68,6 +69,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
 export const CategoryPage: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
+  const { t, isRTL } = useLanguage();
 
   const config = categoryId && CATEGORY_CONFIGS[categoryId]
     ? CATEGORY_CONFIGS[categoryId]
@@ -202,8 +204,8 @@ export const CategoryPage: React.FC = () => {
             to="/"
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-accent transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Store</span>
+            <ArrowLeft className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
+            <span>{t('backToStore')}</span>
           </Link>
 
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -245,7 +247,7 @@ export const CategoryPage: React.FC = () => {
 
             {!isIPhone && (
               <div className="self-start md:self-center px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-left shrink-0">
-                <span className="text-[11px] text-slate-500 font-medium block">Available Packages</span>
+                <span className="text-[11px] text-slate-500 font-medium block">{t('catAvailablePackages')}</span>
                 <span className="text-lg font-display font-black text-slate-900 dark:text-white">
                   {total.toLocaleString()}
                 </span>
@@ -264,20 +266,22 @@ export const CategoryPage: React.FC = () => {
             <div className="max-w-xl mx-auto space-y-3">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-light text-accent text-xs font-bold">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>iOS Catalog Coming Soon</span>
+                <span>{t('catComingSoon')}</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-display font-black text-slate-900 dark:text-white">
                 {config.title}
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                APK installation packages are built exclusively for Android devices and cannot be installed on iOS. We are currently architecting a verified catalog for iPhone applications and games.
+                {t('catComingSoonDesc')}
               </p>
             </div>
 
             <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 max-w-md mx-auto text-xs text-slate-500 flex items-center gap-2.5 text-left">
               <Info className="w-4 h-4 text-accent shrink-0" />
               <span>
-                To download applications right now, explore our extensive Android Applications or Android Games catalogs.
+                {isRTL
+                  ? 'لتنزيل التطبيقات الآن، استكشف كتالوج تطبيقات أو ألعاب أندرويد المتوفرة.'
+                  : 'To download applications right now, explore our extensive Android Applications or Android Games catalogs.'}
               </span>
             </div>
 
@@ -286,13 +290,13 @@ export const CategoryPage: React.FC = () => {
                 to="/category/android-apps"
                 className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-accent bg-accent-hover transition-colors shadow-xs"
               >
-                Explore Android Apps
+                {t('catExploreAndroidApps')}
               </Link>
               <Link
                 to="/category/android-games"
                 className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
-                Explore Android Games
+                {t('catExploreAndroidGames')}
               </Link>
             </div>
           </div>
@@ -309,7 +313,7 @@ export const CategoryPage: React.FC = () => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={`Search within ${config.title}...`}
+                    placeholder={`${t('catSearchWithin')} ${config.title}...`}
                     className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-accent"
                   />
                 </div>
@@ -317,17 +321,17 @@ export const CategoryPage: React.FC = () => {
                 {/* Sort selector */}
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                   <SlidersHorizontal className="w-4 h-4 text-slate-400" />
-                  <label htmlFor="sort-dropdown" className="text-xs text-slate-500 font-medium">Sort:</label>
+                  <label htmlFor="sort-dropdown" className="text-xs text-slate-500 font-medium">{t('catSortBy')}</label>
                   <select
                     id="sort-dropdown"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
                     className="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-accent"
                   >
-                    <option value="latest">Latest Updated</option>
-                    <option value="popular">Popularity / Completeness</option>
-                    <option value="name">Alphabetical (A-Z)</option>
-                    <option value="size">File Size (Largest)</option>
+                    <option value="latest">{t('catSortLatest')}</option>
+                    <option value="popular">{t('catSortPopular')}</option>
+                    <option value="name">{t('catSortName')}</option>
+                    <option value="size">{t('catSortSize')}</option>
                   </select>
                 </div>
               </div>
@@ -374,10 +378,10 @@ export const CategoryPage: React.FC = () => {
               <div className="p-12 text-center rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 space-y-3">
                 <Search className="w-8 h-8 text-slate-400 mx-auto" />
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  No applications found
+                  {t('catNoAppsFound')}
                 </h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Try adjusting your search query or selecting a different category filter.
+                  {t('catNoAppsSub')}
                 </p>
               </div>
             )}
@@ -394,12 +398,12 @@ export const CategoryPage: React.FC = () => {
                   {loadingMore ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Loading More Packages...</span>
+                      <span>{t('catLoadingMore')}</span>
                     </>
                   ) : (
                     <>
-                      <span>Load More ({total - apps.length} remaining)</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <span>{t('catLoadMore')} ({total - apps.length})</span>
+                      <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
                     </>
                   )}
                 </button>

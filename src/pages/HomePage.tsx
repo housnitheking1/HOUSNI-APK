@@ -8,16 +8,20 @@ import {
   ArrowRight,
   Mountain,
   Search,
+  Clock,
 } from 'lucide-react';
 import { HeroSection } from '../components/HeroSection.tsx';
 import { AppCard } from '../components/AppCard.tsx';
 import { AdSenseBanner } from '../components/AdSenseBanner.tsx';
 import { ContactSection } from '../components/ContactSection.tsx';
+import { EditorsChoiceBanner } from '../components/EditorsChoiceBanner.tsx';
+import { useLanguage } from '../context/LanguageContext.tsx';
 import { getFeaturedApps, searchApps, FeaturedAppsData } from '../services/fdroidService.ts';
 import { FDroidApp } from '../types.ts';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [featuredData, setFeaturedData] = useState<FeaturedAppsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,8 +82,17 @@ export const HomePage: React.FC = () => {
 
   const sections = [
     {
+      id: 'recently-updated',
+      title: t('secRecentlyUpdated'),
+      categoryPath: '/category/android-apps',
+      icon: <Clock className="w-5 h-5" />,
+      iconColor: 'text-cyan-400',
+      glowColor: 'rgba(34, 211, 238, 0.4)',
+      apps: featuredData?.recentlyUpdated || [],
+    },
+    {
       id: 'popular-games',
-      title: 'POPULAR GAMES',
+      title: t('secPopularGames'),
       categoryPath: '/category/android-games',
       icon: <Trophy className="w-5 h-5" />,
       iconColor: 'text-amber-400',
@@ -88,7 +101,7 @@ export const HomePage: React.FC = () => {
     },
     {
       id: 'trending-apps',
-      title: 'TRENDING APPS',
+      title: t('secTrendingApps'),
       categoryPath: '/category/android-apps',
       icon: <TrendingUp className="w-5 h-5" />,
       iconColor: 'text-accent',
@@ -97,7 +110,7 @@ export const HomePage: React.FC = () => {
     },
     {
       id: 'latest-applications',
-      title: 'LATEST APPLICATIONS',
+      title: t('secLatestApps'),
       categoryPath: '/category/android-apps',
       icon: <Sparkles className="w-5 h-5" />,
       iconColor: 'text-emerald-400',
@@ -106,7 +119,7 @@ export const HomePage: React.FC = () => {
     },
     {
       id: 'featured-games',
-      title: 'FEATURED GAMES',
+      title: t('secFeaturedGames'),
       categoryPath: '/category/android-games',
       icon: <Flame className="w-5 h-5" />,
       iconColor: 'text-rose-400',
@@ -127,6 +140,13 @@ export const HomePage: React.FC = () => {
 
       {/* 2. Responsive Ad Placement */}
       <AdSenseBanner />
+
+      {/* 3. Editor's Choice Featured Showcase Banner */}
+      {!searchQuery.trim() && (
+        <EditorsChoiceBanner
+          apps={featuredData?.trendingApps || featuredData?.latestApplications || []}
+        />
+      )}
 
       {/* 3. If visitor is searching on homepage: Show Search Results Section */}
       {searchQuery.trim() ? (

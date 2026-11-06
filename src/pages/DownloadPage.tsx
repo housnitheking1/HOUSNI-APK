@@ -15,19 +15,22 @@ import {
 } from 'lucide-react';
 import { FDroidApp } from '../types.ts';
 import { getAppDetails, formatFileSize } from '../services/fdroidService.ts';
-import { TurnstileCaptcha } from '../components/TurnstileCaptcha.tsx';
+import { SmartSecurityCheck } from '../components/SmartSecurityCheck.tsx';
+import { SocialFollowSection } from '../components/SocialFollowSection.tsx';
+import { useLanguage } from '../context/LanguageContext.tsx';
 
 export const DownloadPage: React.FC = () => {
   const { packageId } = useParams<{ packageId: string }>();
   const navigate = useNavigate();
+  const { t, isRTL } = useLanguage();
 
   const [app, setApp] = useState<FDroidApp | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Download workflow stepper state
   // Step 1: Initial waiting interface
-  // Step 2: CAPTCHA verification
-  // Step 3: Countdown (10 seconds)
+  // Step 2: Smart Security verification scan
+  // Step 3: Countdown (3 seconds)
   // Step 4 & 5: Final verified Download APK ready
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -55,10 +58,10 @@ export const DownloadPage: React.FC = () => {
     };
   }, [packageId]);
 
-  // When CAPTCHA is verified, start 10-second timer
-  const handleCaptchaSuccess = (token: string) => {
+  // When Security check is verified, start fast 3-second link preparation timer
+  const handleSecuritySuccess = (token: string) => {
     setIsCaptchaVerified(true);
-    setCountdown(10);
+    setCountdown(3);
   };
 
   useEffect(() => {
@@ -112,7 +115,7 @@ export const DownloadPage: React.FC = () => {
     );
   }
 
-  const progressPercent = countdown !== null ? Math.round(((10 - countdown) / 10) * 100) : 0;
+  const progressPercent = countdown !== null ? Math.round(((3 - countdown) / 3) * 100) : 0;
 
   return (
     <div className="min-h-screen py-8 sm:py-12">
@@ -124,12 +127,12 @@ export const DownloadPage: React.FC = () => {
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-accent transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Cancel & Go Back</span>
+            <ArrowLeft className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
+            <span>{t('backToStore')}</span>
           </button>
 
           <span className="text-xs font-semibold text-slate-500">
-            Secure Download Gateway
+            {t('downloadGateway')}
           </span>
         </div>
 
@@ -187,7 +190,7 @@ export const DownloadPage: React.FC = () => {
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
                 : 'bg-accent/10 border-accent/40 text-accent'
             }`}>
-              1. Security Check
+              {t('step1')}
             </div>
             <div className={`p-2 rounded-xl text-[11px] font-bold border transition-colors ${
               downloadReady
@@ -196,23 +199,25 @@ export const DownloadPage: React.FC = () => {
                 ? 'bg-accent/10 border-accent/40 text-accent animate-pulse'
                 : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400'
             }`}>
-              2. Link Prep
+              {t('step2')}
             </div>
             <div className={`p-2 rounded-xl text-[11px] font-bold border transition-colors ${
               downloadReady
                 ? 'bg-accent text-white shadow-xs'
                 : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400'
             }`}>
-              3. Download APK
+              {t('step3')}
             </div>
           </div>
 
-          {/* STEP 2: Real Cloudflare Turnstile CAPTCHA (or clear unconfigured setup notice) */}
+          {/* STEP 2: Smart Security & Integrity Scan */}
           {!isCaptchaVerified && (
             <div className="pt-2">
-              <TurnstileCaptcha
+              <SmartSecurityCheck
                 isVerified={isCaptchaVerified}
-                onVerify={handleCaptchaSuccess}
+                onVerify={handleSecuritySuccess}
+                appName={app.name}
+                size={app.size}
               />
             </div>
           )}
@@ -249,7 +254,7 @@ export const DownloadPage: React.FC = () => {
             <div className="p-6 sm:p-8 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 dark:bg-emerald-950/20 max-w-lg mx-auto space-y-5 animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-center gap-2 text-emerald-500">
                 <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
-                <span className="text-sm font-bold">Official Download Ready</span>
+                <span className="text-sm font-bold">{t('downloadReady')}</span>
               </div>
 
               <div className="space-y-1">
@@ -268,12 +273,12 @@ export const DownloadPage: React.FC = () => {
                 className="w-full py-4 px-6 rounded-2xl text-base font-bold text-white bg-accent bg-accent-hover transition-all duration-200 shadow-xl hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.6)] flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer"
               >
                 <Download className="w-5 h-5 stroke-[2.5]" />
-                <span>Download APK Now ({formatFileSize(app.size)})</span>
+                <span>{t('downloadNow')} ({formatFileSize(app.size)})</span>
               </button>
 
               {downloadInitiated && (
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-in fade-in">
-                  Your download has started. If it does not start automatically, click the button above again.
+                  {t('downloadStarted')}
                 </p>
               )}
             </div>
@@ -297,6 +302,9 @@ export const DownloadPage: React.FC = () => {
             <span>Responsive Display Ad • Separated from Action Controls</span>
           </div>
         </div>
+
+        {/* Official Social Media Community Section */}
+        <SocialFollowSection />
       </div>
     </div>
   );

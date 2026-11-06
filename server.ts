@@ -123,6 +123,7 @@ app.get('/api/fdroid/featured', (req: Request, res: Response) => {
   const apps = cachedApps.filter((a) => !a.isGame);
 
   res.json({
+    recentlyUpdated: [...cachedApps].sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0)).slice(0, 16),
     popularGames: games.slice(0, 16),
     trendingApps: apps.slice(0, 16),
     latestApplications: cachedApps.slice(0, 16),
@@ -165,16 +166,41 @@ app.get('/api/fdroid/apps', (req: Request, res: Response) => {
     });
   }
 
+  // Famous flagship packages prioritized in catalogs
+  const FAMOUS_IDS = new Set([
+    'org.videolan.vlc',
+    'org.schabi.newpipe',
+    'InfinityLoop1309.NewPipeEnhanced',
+    'code.name.monkey.retromusic',
+    'app.organicmaps',
+    'net.thunderbird.android',
+    'net.cozic.joplin',
+    'io.element.android.x',
+    'com.fsck.k9',
+    'io.anuke.mindustry',
+    'com.shatteredpixel.shatteredpixeldungeon',
+    'com.unciv.app',
+    'org.lichess.mobileV2',
+    'com.github.thewierdnut.endless_mobile',
+    'com.joebywan.daybook',
+    'com.aeropayout.game',
+    'com.sidhant.flow',
+    'cube.run',
+    'com.sidhant.ludo',
+  ]);
+
   // Sorting
   if (sort === 'name') {
     results.sort((a, b) => a.name.localeCompare(b.name));
   } else if (sort === 'size') {
     results.sort((a, b) => (b.size || 0) - (a.size || 0));
   } else if (sort === 'popular') {
-    // Priority to apps with screenshots, full descriptions, and recognized IDs
+    // Priority to flagship applications with screenshots, icons, and high user recognition
     results.sort((a, b) => {
-      const scoreA = (a.screenshots?.length || 0) * 2 + (a.iconUrl ? 3 : 0);
-      const scoreB = (b.screenshots?.length || 0) * 2 + (b.iconUrl ? 3 : 0);
+      const famousA = FAMOUS_IDS.has(a.id) ? 100 : 0;
+      const famousB = FAMOUS_IDS.has(b.id) ? 100 : 0;
+      const scoreA = famousA + (a.screenshots?.length || 0) * 4 + (a.iconUrl ? 5 : 0) + (a.summary ? 2 : 0);
+      const scoreB = famousB + (b.screenshots?.length || 0) * 4 + (b.iconUrl ? 5 : 0) + (b.summary ? 2 : 0);
       return scoreB - scoreA;
     });
   } else {

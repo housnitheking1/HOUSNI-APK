@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { Search, X, Smartphone, Apple, Gamepad2, ShoppingBag, Flame, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, X, Smartphone, Apple, Gamepad2, ShoppingBag, Flame, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext.tsx';
+import { searchApps } from '../services/fdroidService.ts';
+import { FDroidApp } from '../types.ts';
 
 export interface CategoryItem {
   id: string;
@@ -25,14 +28,54 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   selectedCategory,
   onSelectCategory,
 }) => {
+  const { t } = useLanguage();
   const [isFocused, setIsFocused] = useState(false);
+  const [autocompleteResults, setAutocompleteResults] = useState<FDroidApp[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      setAutocompleteResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    let isMounted = true;
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await searchApps({ search: searchQuery.trim(), limit: 5 });
+        if (isMounted) {
+          setAutocompleteResults(res.apps || []);
+          setShowDropdown(true);
+        }
+      } catch (e) {
+        console.warn('Autocomplete fetch failed:', e);
+      }
+    }, 200);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const categories: CategoryItem[] = [
     {
       id: 'android-apps',
-      title: 'Android Apps',
-      subtitle: 'Free Apps & Tools',
+      title: t('catAndroidAppsTitle'),
+      subtitle: t('catAndroidAppsSub'),
       badge: 'APK',
       icon: <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />,
       iconColor: 'text-emerald-400',
@@ -40,8 +83,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     },
     {
       id: 'android-games',
-      title: 'Android Games',
-      subtitle: 'Action, Puzzle & RPG',
+      title: t('catAndroidGamesTitle'),
+      subtitle: t('catAndroidGamesSub'),
       badge: 'Games',
       icon: <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5" />,
       iconColor: 'text-purple-400',
@@ -49,8 +92,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     },
     {
       id: 'iphone-apps',
-      title: 'iPhone Apps',
-      subtitle: 'iOS Directory',
+      title: t('catIPhoneAppsTitle'),
+      subtitle: t('catIPhoneAppsSub'),
       badge: 'iOS',
       icon: <Apple className="w-4 h-4 sm:w-5 sm:h-5" />,
       iconColor: 'text-cyan-400',
@@ -58,8 +101,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     },
     {
       id: 'iphone-games',
-      title: 'iPhone Games',
-      subtitle: 'iOS Gaming Hub',
+      title: t('catIPhoneGamesTitle'),
+      subtitle: t('catIPhoneGamesSub'),
       badge: 'iOS',
       icon: <Flame className="w-4 h-4 sm:w-5 sm:h-5" />,
       iconColor: 'text-amber-400',
@@ -155,7 +198,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Short Subtitle */}
         <p className="text-sm sm:text-base md:text-lg text-slate-700 dark:text-slate-200 max-w-xl mx-auto font-normal leading-relaxed text-balance drop-shadow-xs mb-6">
-          Discover mobile applications and games for Android and iPhone.
+          {t('heroSubtitle')}
         </p>
 
         {/* Modern Glowing Search Bar */}
@@ -183,8 +226,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               onChange={(e) => onSearchChange(e.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="Search apps and games..."
-              aria-label="Search apps and games"
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchPlaceholder')}
               className="w-full py-3.5 sm:py-4 pl-3.5 pr-12 text-sm sm:text-base text-slate-900 dark:text-white placeholder-slate-400 bg-transparent rounded-2xl focus:outline-none"
             />
 
@@ -194,12 +237,75 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 type="button"
                 onClick={() => onSearchChange('')}
                 className="absolute right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
-                aria-label="Clear search"
+                aria-label={t('clearSearch')}
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
+
+          {/* Autocomplete Dropdown Popover */}
+          {showDropdown && autocompleteResults.length > 0 && (
+            <div
+              ref={dropdownRef}
+              className="absolute top-full left-0 right-0 mt-2 z-50 bg-white/95 dark:bg-[#0B132B]/95 backdrop-blur-2xl border border-slate-200 dark:border-accent/40 rounded-2xl shadow-2xl overflow-hidden text-left p-2 animate-in fade-in slide-in-from-top-2 duration-150"
+            >
+              <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                <span className="flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-accent" />
+                  <span>{t('quickMatches')}</span>
+                </span>
+                <span className="text-accent">{autocompleteResults.length} {t('results')}</span>
+              </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-72 overflow-y-auto">
+                {autocompleteResults.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigate(`/app/${encodeURIComponent(item.id)}`);
+                    }}
+                    className="w-full flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-xl transition-colors cursor-pointer group text-left"
+                  >
+                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/10 shrink-0 flex items-center justify-center shadow-xs">
+                      {item.iconUrl ? (
+                        <img src={item.iconUrl} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="font-bold text-accent text-sm">{item.name.charAt(0)}</span>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-accent transition-colors truncate">
+                        {item.name}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        {item.categories && item.categories[0] ? item.categories[0] : 'Utility'} • v{item.versionName || '1.0'}
+                      </p>
+                    </div>
+
+                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-accent group-hover:translate-x-0.5 transition-all shrink-0" />
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-2 border-t border-slate-100 dark:border-slate-800 mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDropdown(false);
+                    navigate(`/category/android-apps?search=${encodeURIComponent(searchQuery)}`);
+                  }}
+                  className="w-full py-2 text-center text-xs font-bold text-accent hover:underline flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <span>{t('viewAllResults')} "{searchQuery}"</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 4. Category Cards in ONE SINGLE HORIZONTAL ROW on desktop, compact and sleek */}
