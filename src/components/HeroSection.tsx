@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Smartphone, Apple, Gamepad2, ShoppingBag, Flame, ArrowRight, Sparkles } from 'lucide-react';
+import { Search, X, Smartphone, Gamepad2, ShoppingBag, Flame, ArrowRight, Sparkles, Monitor } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext.tsx';
 import { searchApps } from '../services/fdroidService.ts';
@@ -91,19 +91,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       glowColor: 'rgba(192, 132, 252, 0.4)',
     },
     {
-      id: 'iphone-apps',
-      title: t('catIPhoneAppsTitle'),
-      subtitle: t('catIPhoneAppsSub'),
-      badge: 'iOS',
-      icon: <Apple className="w-4 h-4 sm:w-5 sm:h-5" />,
+      id: 'pc-apps',
+      title: t('catPCAppsTitle'),
+      subtitle: t('catPCAppsSub'),
+      badge: 'PC',
+      icon: <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />,
       iconColor: 'text-cyan-400',
       glowColor: 'rgba(34, 211, 238, 0.4)',
     },
     {
-      id: 'iphone-games',
-      title: t('catIPhoneGamesTitle'),
-      subtitle: t('catIPhoneGamesSub'),
-      badge: 'iOS',
+      id: 'pc-games',
+      title: t('catPCGamesTitle'),
+      subtitle: t('catPCGamesSub'),
+      badge: 'PC Games',
       icon: <Flame className="w-4 h-4 sm:w-5 sm:h-5" />,
       iconColor: 'text-amber-400',
       glowColor: 'rgba(251, 191, 36, 0.4)',
@@ -149,10 +149,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         </div>
 
-        {/* Apple Icon (Right Upper) */}
+        {/* PC / Monitor Icon (Right Upper) */}
         <div className="absolute top-[10%] right-[10%] animate-float-delayed">
-          <div className="w-11 h-11 rounded-2xl glass-card border border-slate-200/80 dark:border-accent/40 flex items-center justify-center text-slate-800 dark:text-white shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] dark:shadow-[0_0_20px_rgba(var(--accent-rgb),0.35)] backdrop-blur-md">
-            <Apple className="w-5 h-5 drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]" />
+          <div className="w-11 h-11 rounded-2xl glass-card border border-slate-200/80 dark:border-accent/40 flex items-center justify-center text-cyan-400 shadow-[0_0_20px_rgba(var(--accent-rgb),0.2)] dark:shadow-[0_0_20px_rgba(var(--accent-rgb),0.35)] backdrop-blur-md">
+            <Monitor className="w-5 h-5 drop-shadow-[0_0_8px_rgba(34,211,238,0.7)]" />
           </div>
         </div>
 

@@ -143,7 +143,14 @@ export async function searchApps(params: {
   };
 }
 
+import { getPcItemById } from './pcService.ts';
+
 export async function getAppDetails(packageId: string): Promise<FDroidApp | null> {
+  if (packageId.startsWith('pc-')) {
+    const pcItem = await getPcItemById(packageId);
+    if (pcItem) return pcItem;
+  }
+
   try {
     const res = await fetch(`/api/fdroid/apps/${encodeURIComponent(packageId)}`);
     if (res.ok) {
@@ -152,6 +159,9 @@ export async function getAppDetails(packageId: string): Promise<FDroidApp | null
   } catch (err) {
     console.warn('[HOUSNI APK] Error fetching app details:', err);
   }
+
+  const pcFallback = await getPcItemById(packageId);
+  if (pcFallback) return pcFallback;
 
   const featured = await getFeaturedApps();
   const all = [

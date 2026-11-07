@@ -13,7 +13,7 @@ export const translations: Translations = {
   // Navigation & Branding
   brandName: { en: 'HOUSNI APK', ar: 'HOUSNI APK' },
   navAndroid: { en: 'Android', ar: 'أندرويد' },
-  navIPhone: { en: 'iPhone', ar: 'آيفون' },
+  navPC: { en: 'PC', ar: 'حاسوب' },
   navGames: { en: 'Games', ar: 'الألعاب' },
   navApps: { en: 'Apps', ar: 'التطبيقات' },
   navContact: { en: 'Contact Us', ar: 'اتصل بنا' },
@@ -29,17 +29,17 @@ export const translations: Translations = {
   // Hero Section
   heroTitle: { en: 'HOUSNI APK', ar: 'HOUSNI APK' },
   heroSubtitle: {
-    en: 'Discover and download verified mobile applications and games for Android and iPhone.',
-    ar: 'اكتشف وحمّل تطبيقات وألعاب الهاتف الموثوقة والآمنة للأندرويد والآيفون.',
+    en: 'Discover and download verified applications and games for Android and PC.',
+    ar: 'اكتشف وحمّل تطبيقات وألعاب الهاتف والحاسوب الموثوقة والآمنة.',
   },
   catAndroidAppsTitle: { en: 'Android Apps', ar: 'تطبيقات أندرويد' },
   catAndroidAppsSub: { en: 'Free Apps & Tools', ar: 'تطبيقات وأدوات مجانية' },
   catAndroidGamesTitle: { en: 'Android Games', ar: 'ألعاب أندرويد' },
   catAndroidGamesSub: { en: 'Action, Puzzle & RPG', ar: 'أكشن، ألغاز واستراتيجيا' },
-  catIPhoneAppsTitle: { en: 'iPhone Apps', ar: 'تطبيقات آيفون' },
-  catIPhoneAppsSub: { en: 'iOS Directory', ar: 'دليل برامج iOS' },
-  catIPhoneGamesTitle: { en: 'iPhone Games', ar: 'ألعاب آيفون' },
-  catIPhoneGamesSub: { en: 'iOS Gaming Hub', ar: 'ألعاب هواتف آيفون' },
+  catPCAppsTitle: { en: 'PC Software', ar: 'برامج الحاسوب' },
+  catPCAppsSub: { en: 'Desktop Utilities & Tools', ar: 'برامج وأدوات سطح المكتب' },
+  catPCGamesTitle: { en: 'PC Games', ar: 'ألعاب الحاسوب' },
+  catPCGamesSub: { en: 'Action, Shooter & RPG', ar: 'أكشن، إطلاق نار واستراتيجيا' },
 
   // Editor's Choice
   editorsChoiceBadge: { en: "Editor's Choice", ar: 'اختيار المحرر' },
@@ -189,9 +189,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     localStorage.setItem('housni_language', language);
-    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    // Preserve layout structure and avoid inverting banner or page elements
+    document.documentElement.dir = 'ltr';
     document.documentElement.lang = language;
-  }, [language, isRTL]);
+  }, [language]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);

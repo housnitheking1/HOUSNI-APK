@@ -58,10 +58,10 @@ export const DownloadPage: React.FC = () => {
     };
   }, [packageId]);
 
-  // When Security check is verified, start fast 3-second link preparation timer
+  // When Security checkbox is verified, start 10-second download preparation timer
   const handleSecuritySuccess = (token: string) => {
     setIsCaptchaVerified(true);
-    setCountdown(3);
+    setCountdown(10);
   };
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export const DownloadPage: React.FC = () => {
     );
   }
 
-  const progressPercent = countdown !== null ? Math.round(((3 - countdown) / 3) * 100) : 0;
+  const progressPercent = countdown !== null ? Math.round(((10 - countdown) / 10) * 100) : 0;
 
   return (
     <div className="min-h-screen py-8 sm:py-12">
@@ -210,7 +210,7 @@ export const DownloadPage: React.FC = () => {
             </div>
           </div>
 
-          {/* STEP 2: Smart Security & Integrity Scan */}
+          {/* STEP 2: Smart Checkbox Captcha Verification */}
           {!isCaptchaVerified && (
             <div className="pt-2">
               <SmartSecurityCheck
@@ -222,16 +222,18 @@ export const DownloadPage: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 3: 10-Second Countdown (compatible with standard advertising policies) */}
+          {/* STEP 3: 10-Second Countdown Timer */}
           {isCaptchaVerified && !downloadReady && (
             <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 max-w-md mx-auto space-y-4 animate-in fade-in">
               <div className="flex items-center justify-center gap-2 text-xs font-semibold text-accent">
                 <Clock className="w-4 h-4 animate-spin" />
-                <span>Preparing secure official package...</span>
+                <span>
+                  {isRTL ? 'جارِ تجهيز وتأمين رابط التحميل المباشر...' : 'Preparing secure direct download package...'}
+                </span>
               </div>
 
               {/* Countdown Numbers */}
-              <div className="text-4xl sm:text-5xl font-display font-black text-slate-900 dark:text-white">
+              <div className="text-4xl sm:text-5xl font-display font-black text-slate-900 dark:text-white tracking-tight">
                 {countdown}s
               </div>
 
@@ -243,8 +245,10 @@ export const DownloadPage: React.FC = () => {
                 />
               </div>
 
-              <p className="text-[11px] text-slate-500">
-                Please wait a few seconds while the download package is verified and generated.
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {isRTL
+                  ? 'يرجى الانتظار ١٠ ثوانٍ لإتمام فحص وتوليد رابط التنزيل المباشر.'
+                  : 'Please wait 10 seconds while the direct download link is securely verified.'}
               </p>
             </div>
           )}

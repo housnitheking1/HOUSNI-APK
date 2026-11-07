@@ -67,10 +67,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenLegal }) => {
             </button>
             <button
               type="button"
-              onClick={() => handleLink('/category/iphone-apps', 'iphone')}
+              onClick={() => handleLink('/category/pc-apps', 'pc')}
               className="hover:text-accent transition-colors cursor-pointer"
             >
-              {t('navIPhone')}
+              {t('navPC')}
             </button>
             <button
               type="button"

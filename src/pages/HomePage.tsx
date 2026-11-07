@@ -36,7 +36,9 @@ export const HomePage: React.FC = () => {
       try {
         setLoading(true);
         const data = await getFeaturedApps();
-        if (isMounted) setFeaturedData(data);
+        if (isMounted) {
+          setFeaturedData(data);
+        }
       } catch (err) {
         console.error('Failed to load featured apps:', err);
       } finally {
@@ -148,7 +150,7 @@ export const HomePage: React.FC = () => {
         />
       )}
 
-      {/* 3. If visitor is searching on homepage: Show Search Results Section */}
+      {/* 4. If visitor is searching on homepage: Show Search Results Section */}
       {searchQuery.trim() ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
@@ -171,7 +173,7 @@ export const HomePage: React.FC = () => {
           </div>
 
           {searchResults.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
               {searchResults.map((app) => (
                 <AppCard key={app.id} app={app} />
               ))}
@@ -185,7 +187,7 @@ export const HomePage: React.FC = () => {
           ) : null}
         </div>
       ) : (
-        /* 4. Default Curated Home Sections (Clean HOUSNI APK Presentation) */
+        /* 4. Default Curated Home Sections (Clean HOUSNI APK Presentation: 3 per row) */
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
           {sections.map((section) => (
             <section key={section.id} id={section.id} className="scroll-mt-24 space-y-5">
@@ -216,19 +218,19 @@ export const HomePage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Grid of 4 to 8 AppCards */}
+              {/* Grid of 3 AppCards per row (square cards) */}
               {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {Array.from({ length: 4 }).map((_, i) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
+                  {Array.from({ length: 6 }).map((_, i) => (
                     <div
                       key={i}
-                      className="h-44 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 animate-pulse p-4"
+                      className="aspect-square rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 animate-pulse p-4"
                     />
                   ))}
                 </div>
               ) : section.apps && section.apps.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {section.apps.slice(0, 8).map((app) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
+                  {section.apps.slice(0, 6).map((app) => (
                     <AppCard key={app.id} app={app} />
                   ))}
                 </div>

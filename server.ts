@@ -227,10 +227,35 @@ app.get('/api/fdroid/apps/:packageId', (req: Request, res: Response) => {
   const pkgId = req.params.packageId;
   const app = cachedApps.find((a) => a.id.toLowerCase() === pkgId.toLowerCase());
   if (!app) {
-    res.status(404).json({ error: 'Application not found in official F-Droid repository' });
+    // Check PC catalog
+    try {
+      const pcCatalogPath = path.join(__dirname, 'src/data/pc-catalog.json');
+      if (fs.existsSync(pcCatalogPath)) {
+        const pcData = JSON.parse(fs.readFileSync(pcCatalogPath, 'utf8'));
+        const pcItem = [...(pcData.apps || []), ...(pcData.games || [])].find((item: any) => item.id.toLowerCase() === pkgId.toLowerCase());
+        if (pcItem) {
+          return res.json(pcItem);
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    res.status(404).json({ error: 'Application not found in repository' });
     return;
   }
   res.json(app);
+});
+
+// ==========================================
+// 5. PC Applications & Games API
+// ==========================================
+app.get('/api/pc/apps', (req: Request, res: Response) => {
+  res.json({ total: 0, apps: [] });
+});
+
+app.get('/api/pc/games', (req: Request, res: Response) => {
+  res.json({ total: 0, apps: [] });
 });
 
 // ==========================================

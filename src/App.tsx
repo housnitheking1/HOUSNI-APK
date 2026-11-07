@@ -5,8 +5,8 @@ import { LanguageProvider } from './context/LanguageContext.tsx';
 import { Header } from './components/Header.tsx';
 import { Footer } from './components/Footer.tsx';
 import { LegalModal } from './components/LegalModal.tsx';
-import { PWAInstallPrompt } from './components/PWAInstallPrompt.tsx';
 import { OfflineIndicator } from './components/OfflineIndicator.tsx';
+import { ScrollToTopButton } from './components/ScrollToTopButton.tsx';
 import { HomePage } from './pages/HomePage.tsx';
 import { CategoryPage } from './pages/CategoryPage.tsx';
 import { AppDetailPage } from './pages/AppDetailPage.tsx';
@@ -41,11 +41,11 @@ function AppLayout() {
         onClose={() => setLegalModal(null)}
       />
 
-      {/* PWA In-App Install Prompt Banner & iOS Guided Flow */}
-      <PWAInstallPrompt />
-
       {/* Offline Connectivity Notification */}
       <OfflineIndicator />
+
+      {/* Floating Scroll to Top Arrow Button */}
+      <ScrollToTopButton />
     </div>
   );
 }

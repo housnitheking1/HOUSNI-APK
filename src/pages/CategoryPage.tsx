@@ -6,21 +6,21 @@ import {
   SlidersHorizontal,
   Smartphone,
   Gamepad2,
-  Apple,
+  Monitor,
   RefreshCw,
   ArrowRight,
-  Sparkles,
-  Info,
+  Flame,
 } from 'lucide-react';
 import { FDroidApp } from '../types.ts';
 import { AppCard } from '../components/AppCard.tsx';
 import { searchApps } from '../services/fdroidService.ts';
+import { getPcApps, getPcGames } from '../services/pcService.ts';
 import { useLanguage } from '../context/LanguageContext.tsx';
 
 interface CategoryConfig {
   id: string;
   title: string;
-  platform: 'android' | 'iphone';
+  platform: 'android' | 'pc';
   type: 'apps' | 'games';
   description: string;
   icon: React.ReactNode;
@@ -46,22 +46,22 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     icon: <Gamepad2 className="w-6 h-6" />,
     iconColor: 'text-purple-400',
   },
-  'iphone-apps': {
-    id: 'iphone-apps',
-    title: 'iPhone Applications',
-    platform: 'iphone',
+  'pc-apps': {
+    id: 'pc-apps',
+    title: 'PC Software & Applications',
+    platform: 'pc',
     type: 'apps',
-    description: 'Curated iOS application directory for Apple devices.',
-    icon: <Apple className="w-6 h-6" />,
+    description: 'Explore verified desktop software, utilities, creative studios, and tools for Windows PC.',
+    icon: <Monitor className="w-6 h-6" />,
     iconColor: 'text-cyan-400',
   },
-  'iphone-games': {
-    id: 'iphone-games',
-    title: 'iPhone Games',
-    platform: 'iphone',
+  'pc-games': {
+    id: 'pc-games',
+    title: 'PC Games',
+    platform: 'pc',
     type: 'games',
-    description: 'Curated mobile gaming library for iPhone and iPad devices.',
-    icon: <Apple className="w-6 h-6" />,
+    description: 'Discover top free-to-play PC gaming titles, MMOs, shooters, strategy, and RPGs for Windows PC.',
+    icon: <Flame className="w-6 h-6" />,
     iconColor: 'text-amber-400',
   },
 };
@@ -75,7 +75,8 @@ export const CategoryPage: React.FC = () => {
     ? CATEGORY_CONFIGS[categoryId]
     : CATEGORY_CONFIGS['android-apps'];
 
-  const isIPhone = config.platform === 'iphone';
+  const isPcApps = config.id === 'pc-apps';
+  const isPcGames = config.id === 'pc-games';
 
   const [apps, setApps] = useState<FDroidApp[]>([]);
   const [total, setTotal] = useState(0);
@@ -87,7 +88,7 @@ export const CategoryPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [sortBy, setSortBy] = useState<'latest' | 'popular' | 'name' | 'size'>('latest');
 
-  const appCategories = [
+  const androidAppCategories = [
     'All',
     'Internet',
     'Multimedia',
@@ -100,7 +101,7 @@ export const CategoryPage: React.FC = () => {
     'Graphics',
   ];
 
-  const gameCategories = [
+  const androidGameCategories = [
     'All',
     'Puzzle Game',
     'Action Game',
@@ -112,22 +113,132 @@ export const CategoryPage: React.FC = () => {
     'Sport Game',
   ];
 
-  const filterOptions = config.type === 'games' ? gameCategories : appCategories;
+  const pcAppCategories = [
+    'All',
+    'Multimedia',
+    'Graphics',
+    'Development',
+    'System',
+    'Utilities',
+  ];
+
+  const pcGameCategories = [
+    'All',
+    'Shooter',
+    'Action Game',
+    'Role-Playing Game',
+    'Strategy',
+    'MMO',
+  ];
+
+  const filterOptions = isPcApps
+    ? pcAppCategories
+    : isPcGames
+    ? pcGameCategories
+    : config.type === 'games'
+    ? androidGameCategories
+    : androidAppCategories;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    setActiveFilter('All');
+    setSearchQuery('');
   }, [categoryId]);
 
   useEffect(() => {
-    if (isIPhone) {
-      setLoading(false);
-      return;
-    }
-
     let isMounted = true;
     async function loadCategoryApps() {
       setLoading(true);
       try {
+        if (isPcApps) {
+          const res = await getPcApps({
+            search: searchQuery,
+            category: activeFilter,
+            page: 1,
+            limit: 24,
+          });
+          if (isMounted) {
+            setApps(res.apps);
+            setTotal(res.total);
+            setPage(1);
+            setTotalPages(res.totalPages);
+          }
+        } else if (isPcGames) {
+          const res = await getPcGames({
+            search: searchQuery,
+            category: activeFilter,
+            page: 1,
+            limit: 24,
+          });
+          if (isMounted) {
+            setApps(res.apps);
+            setTotal(res.total);
+            setPage(1);
+            setTotalPages(res.totalPages);
+          }
+        } else {
+          // Android apps or Android games
+          let catParam: string | undefined = undefined;
+          if (activeFilter !== 'All') {
+            catParam = activeFilter;
+          } else if (config.type === 'games') {
+            catParam = 'games';
+          } else {
+            catParam = 'apps';
+          }
+
+          const res = await searchApps({
+            search: searchQuery,
+            category: catParam,
+            sort: sortBy,
+            page: 1,
+            limit: 24,
+          });
+
+          if (isMounted) {
+            setApps(res.apps);
+            setTotal(res.total);
+            setPage(1);
+            setTotalPages(res.totalPages);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading category apps:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadCategoryApps();
+    return () => {
+      isMounted = false;
+    };
+  }, [categoryId, config.id, config.type, isPcApps, isPcGames, searchQuery, activeFilter, sortBy]);
+
+  const handleLoadMore = async () => {
+    if (loadingMore || page >= totalPages) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      if (isPcApps) {
+        const res = await getPcApps({
+          search: searchQuery,
+          category: activeFilter,
+          page: nextPage,
+          limit: 24,
+        });
+        setApps((prev) => [...prev, ...res.apps]);
+        setPage(nextPage);
+      } else if (isPcGames) {
+        const res = await getPcGames({
+          search: searchQuery,
+          category: activeFilter,
+          page: nextPage,
+          limit: 24,
+        });
+        setApps((prev) => [...prev, ...res.apps]);
+        setPage(nextPage);
+      } else {
         let catParam: string | undefined = undefined;
         if (activeFilter !== 'All') {
           catParam = activeFilter;
@@ -141,53 +252,13 @@ export const CategoryPage: React.FC = () => {
           search: searchQuery,
           category: catParam,
           sort: sortBy,
-          page: 1,
+          page: nextPage,
           limit: 24,
         });
 
-        if (isMounted) {
-          setApps(res.apps);
-          setTotal(res.total);
-          setPage(1);
-          setTotalPages(res.totalPages);
-        }
-      } catch (err) {
-        console.error('Error loading category apps:', err);
-      } finally {
-        if (isMounted) setLoading(false);
+        setApps((prev) => [...prev, ...res.apps]);
+        setPage(nextPage);
       }
-    }
-
-    loadCategoryApps();
-    return () => {
-      isMounted = false;
-    };
-  }, [categoryId, config.type, isIPhone, searchQuery, activeFilter, sortBy]);
-
-  const handleLoadMore = async () => {
-    if (loadingMore || page >= totalPages) return;
-    setLoadingMore(true);
-    try {
-      const nextPage = page + 1;
-      let catParam: string | undefined = undefined;
-      if (activeFilter !== 'All') {
-        catParam = activeFilter;
-      } else if (config.type === 'games') {
-        catParam = 'games';
-      } else {
-        catParam = 'apps';
-      }
-
-      const res = await searchApps({
-        search: searchQuery,
-        category: catParam,
-        sort: sortBy,
-        page: nextPage,
-        limit: 24,
-      });
-
-      setApps((prev) => [...prev, ...res.apps]);
-      setPage(nextPage);
     } catch (err) {
       console.error('Error loading more apps:', err);
     } finally {
@@ -234,7 +305,7 @@ export const CategoryPage: React.FC = () => {
 
               <div className="space-y-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-accent px-2.5 py-0.5 rounded-md bg-accent-light border border-accent/20">
-                  {config.platform === 'android' ? 'Android Ecosystem' : 'Apple iOS'}
+                  {config.platform === 'android' ? 'Android Ecosystem' : 'PC Windows Ecosystem'}
                 </span>
                 <h1 className="text-2xl sm:text-4xl font-display font-black text-slate-900 dark:text-white tracking-tight">
                   {config.title}
@@ -245,80 +316,34 @@ export const CategoryPage: React.FC = () => {
               </div>
             </div>
 
-            {!isIPhone && (
-              <div className="self-start md:self-center px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-left shrink-0">
-                <span className="text-[11px] text-slate-500 font-medium block">{t('catAvailablePackages')}</span>
-                <span className="text-lg font-display font-black text-slate-900 dark:text-white">
-                  {total.toLocaleString()}
-                </span>
-              </div>
-            )}
+            <div className="self-start md:self-center px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-left shrink-0">
+              <span className="text-[11px] text-slate-500 font-medium block">{t('catAvailablePackages')}</span>
+              <span className="text-lg font-display font-black text-slate-900 dark:text-white">
+                {total.toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* 1. If iPhone Category: Clean, compliant Coming Soon state */}
-        {isIPhone ? (
-          <div className="relative overflow-hidden p-8 sm:p-14 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0B132B]/70 backdrop-blur-xl text-center space-y-6 shadow-sm">
-            <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-accent mx-auto flex items-center justify-center shadow-xs">
-              <Apple className="w-8 h-8" />
-            </div>
-
-            <div className="max-w-xl mx-auto space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-light text-accent text-xs font-bold">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{t('catComingSoon')}</span>
+        {/* Real search, filters, sorting & 3-column square cards grid */}
+        <div className="space-y-6">
+          {/* Search and Filters Bar */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-[#0B132B]/80 backdrop-blur-xl space-y-4">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              {/* Search Input */}
+              <div className="relative flex-1 w-full">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={`${t('catSearchWithin')} ${config.title}...`}
+                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-accent"
+                />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-display font-black text-slate-900 dark:text-white">
-                {config.title}
-              </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                {t('catComingSoonDesc')}
-              </p>
-            </div>
 
-            <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 max-w-md mx-auto text-xs text-slate-500 flex items-center gap-2.5 text-left">
-              <Info className="w-4 h-4 text-accent shrink-0" />
-              <span>
-                {isRTL
-                  ? 'لتنزيل التطبيقات الآن، استكشف كتالوج تطبيقات أو ألعاب أندرويد المتوفرة.'
-                  : 'To download applications right now, explore our extensive Android Applications or Android Games catalogs.'}
-              </span>
-            </div>
-
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                to="/category/android-apps"
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-accent bg-accent-hover transition-colors shadow-xs"
-              >
-                {t('catExploreAndroidApps')}
-              </Link>
-              <Link
-                to="/category/android-games"
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                {t('catExploreAndroidGames')}
-              </Link>
-            </div>
-          </div>
-        ) : (
-          /* 2. Android Category: Real search, filters, sorting & grid */
-          <div className="space-y-6">
-            {/* Search and Filters Bar */}
-            <div className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-[#0B132B]/80 backdrop-blur-xl space-y-4">
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                {/* Search Input */}
-                <div className="relative flex-1 w-full">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={`${t('catSearchWithin')} ${config.title}...`}
-                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-accent"
-                  />
-                </div>
-
-                {/* Sort selector */}
+              {/* Sort selector (Android only) */}
+              {!isPcApps && !isPcGames && (
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                   <SlidersHorizontal className="w-4 h-4 text-slate-400" />
                   <label htmlFor="sort-dropdown" className="text-xs text-slate-500 font-medium">{t('catSortBy')}</label>
@@ -334,83 +359,83 @@ export const CategoryPage: React.FC = () => {
                     <option value="size">{t('catSortSize')}</option>
                   </select>
                 </div>
-              </div>
-
-              {/* Sub-Category Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                {filterOptions.map((filter) => {
-                  const isActive = activeFilter === filter;
-                  return (
-                    <button
-                      key={filter}
-                      type="button"
-                      onClick={() => setActiveFilter(filter)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                        isActive
-                          ? 'bg-accent text-white shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
-                      }`}
-                    >
-                      {filter}
-                    </button>
-                  );
-                })}
-              </div>
+              )}
             </div>
 
-            {/* Applications Grid */}
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-44 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 animate-pulse p-4"
-                  />
-                ))}
-              </div>
-            ) : apps.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {apps.map((app) => (
-                  <AppCard key={app.id} app={app} />
-                ))}
-              </div>
-            ) : (
-              <div className="p-12 text-center rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 space-y-3">
-                <Search className="w-8 h-8 text-slate-400 mx-auto" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {t('catNoAppsFound')}
-                </h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  {t('catNoAppsSub')}
-                </p>
-              </div>
-            )}
-
-            {/* Load More Pagination */}
-            {page < totalPages && (
-              <div className="text-center pt-8">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold text-white bg-accent bg-accent-hover transition-all duration-200 shadow-md hover:shadow-[0_0_20px_rgba(var(--accent-rgb),0.5)] active:scale-95 disabled:opacity-50"
-                >
-                  {loadingMore ? (
-                    <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>{t('catLoadingMore')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{t('catLoadMore')} ({total - apps.length})</span>
-                      <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
+            {/* Sub-Category Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+              {filterOptions.map((filter) => {
+                const isActive = activeFilter === filter;
+                return (
+                  <button
+                    key={filter}
+                    type="button"
+                    onClick={() => setActiveFilter(filter)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? 'bg-accent text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        )}
+
+          {/* Applications Grid: 3 cards per row on desktop */}
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-square rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 animate-pulse p-4"
+                />
+              ))}
+            </div>
+          ) : apps.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
+              {apps.map((app) => (
+                <AppCard key={app.id} app={app} />
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 space-y-3">
+              <Search className="w-8 h-8 text-slate-400 mx-auto" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                {t('catNoAppsFound')}
+              </h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                {t('catNoAppsSub')}
+              </p>
+            </div>
+          )}
+
+          {/* Load More Pagination */}
+          {page < totalPages && (
+            <div className="text-center pt-8">
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold text-white bg-accent bg-accent-hover transition-all duration-200 shadow-md hover:shadow-[0_0_20px_rgba(var(--accent-rgb),0.5)] active:scale-95 disabled:opacity-50 cursor-pointer"
+              >
+                {loadingMore ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>{t('catLoadingMore')}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{t('catLoadMore')} ({total - apps.length})</span>
+                    <ArrowRight className={`w-3.5 h-3.5 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

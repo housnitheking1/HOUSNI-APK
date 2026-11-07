@@ -114,14 +114,14 @@ export const ACCENT_COLORS: AccentColor[] = [
   },
 ];
 
-export type NavigationItem = 'home' | 'android' | 'iphone' | 'games' | 'apps' | 'contact';
+export type NavigationItem = 'home' | 'android' | 'pc' | 'games' | 'apps' | 'contact';
 
 export type LegalModalType = 'about' | 'privacy' | 'terms' | 'disclaimer' | null;
 
 export interface CategoryInfo {
   id: string;
   title: string;
-  platform: 'android' | 'iphone';
+  platform: 'android' | 'pc';
   type: 'apps' | 'games';
   description: string;
   badge: string;

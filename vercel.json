@@ -2,6 +2,14 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/api/fdroid/(.*)",
+      "destination": "/api/fdroid?endpoint=$1"
+    },
+    {
+      "source": "/api/fdroid",
+      "destination": "/api/fdroid"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/fdroid?endpoint=$1"
     },

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Sun, Moon, Menu, X, Smartphone, Apple, Gamepad2, Layers, Download } from 'lucide-react';
+import { Sun, Moon, Menu, X, Smartphone, Monitor, Gamepad2, Layers } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext.tsx';
 import { useLanguage } from '../context/LanguageContext.tsx';
-import { usePWAInstall } from '../hooks/usePWAInstall.ts';
 import { ColorPickerPopover } from './ColorPickerPopover.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { NavigationItem } from '../types.ts';
@@ -16,14 +15,13 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeNav, onNavigate }) => {
   const { theme, toggleTheme } = useTheme();
   const { t } = useLanguage();
-  const { isInstallable, isInstalled, install } = usePWAInstall();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const navLinks = [
     { id: 'android', label: t('navAndroid'), path: '/category/android-apps', icon: <Smartphone className="w-4 h-4" /> },
-    { id: 'iphone', label: t('navIPhone'), path: '/category/iphone-apps', icon: <Apple className="w-4 h-4" /> },
+    { id: 'pc', label: t('navPC'), path: '/category/pc-apps', icon: <Monitor className="w-4 h-4" /> },
     { id: 'games', label: t('navGames'), path: '/category/android-games', icon: <Gamepad2 className="w-4 h-4" /> },
     { id: 'apps', label: t('navApps'), path: '/category/android-apps', icon: <Layers className="w-4 h-4" /> },
   ];
@@ -99,19 +97,8 @@ export const Header: React.FC<HeaderProps> = ({ activeNav, onNavigate }) => {
           })}
         </nav>
 
-        {/* Right: Theme Toggle, Color Picker, Install & Hamburger Menu */}
+        {/* Right: Theme Toggle, Color Picker, Language & Hamburger Menu */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* In-App PWA Install Button */}
-          {!isInstalled && isInstallable && (
-            <button
-              type="button"
-              onClick={install}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-accent bg-accent-hover transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Install App</span>
-            </button>
-          )}
 
           {/* Language Switcher (EN / AR) */}
           <LanguageSwitcher />
